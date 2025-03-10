@@ -1,0 +1,38 @@
+Software Engineer - Machine Learning
+Acme Technology Inc.
+
+About the Role:
+We are seeking a talented Software Engineer with a strong background in machine learning to join our innovative team. You will be working on cutting-edge projects that leverage AI/ML to solve complex problems in our enterprise software platform.
+
+Responsibilities:
+- Design, develop, and maintain efficient, reusable, and reliable Python code
+- Implement machine learning models and algorithms to solve business problems
+- Collaborate with cross-functional teams to define, design, and ship new features
+- Identify bottlenecks and bugs, and devise solutions to address and mitigate these issues
+- Help maintain code quality, organization, and automatization
+- Contribute to documentation and technical specifications
+
+Requirements:
+- Bachelor's degree in Computer Science, Engineering or a related field
+- 3+ years of experience in software development with Python
+- Experience with machine learning frameworks (TensorFlow, PyTorch, scikit-learn)
+- Strong understanding of data structures, algorithms, and software design
+- Familiarity with RESTful APIs and microservices architecture
+- Experience with version control systems (Git) and CI/CD pipelines
+- Excellent problem-solving skills and attention to detail
+
+Nice to Have:
+- Master's or PhD in Computer Science, Machine Learning, or related field
+- Experience with cloud platforms (AWS, GCP, Azure)
+- Knowledge of containerization technologies (Docker, Kubernetes)
+- Experience with big data processing frameworks (Spark, Hadoop)
+- Contributions to open-source projects
+- Experience with NLP or computer vision applications
+
+Benefits:
+- Competitive salary and equity options
+- Comprehensive health, dental, and vision insurance
+- 401(k) matching
+- Flexible work arrangements
+- Professional development opportunities
+- Collaborative and innovative work environment

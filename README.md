@@ -1,14 +1,25 @@
-# Resume Tailoring Tool - Usage Guide
+# Resume Tailor
 
-This tool automatically tailors your LaTeX resume for specific job descriptions using AI analysis, making your resume more ATS-friendly and increasing your chances of getting interviews.
+Resume Tailor is a command-line tool that automatically customizes your LaTeX resume for specific job descriptions using AI analysis, making your resume more ATS-friendly and increasing your chances of getting interviews.
+
+## Features
+
+- **AI-Powered Analysis**: Uses Claude's API to extract key skills and requirements from job descriptions
+- **Smart Customization**: Tailors your resume content to better match job requirements
+- **LaTeX Validation**: Ensures the modified resume compiles correctly
+- **Application Tracking**: Maintains a detailed log of all generated resumes and application statuses
 
 ## Installation
 
-1. Clone this repository or download the script.
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/ramirezra4/resume_tailor.git
+   cd resume_tailor
+   ```
 
 2. Install required dependencies:
    ```bash
-   pip install anthropic argparse
+   pip install -r requirements.txt
    ```
 
 3. Ensure you have a LaTeX compiler installed (pdflatex):
@@ -21,9 +32,9 @@ This tool automatically tailors your LaTeX resume for specific job descriptions 
    export ANTHROPIC_API_KEY=your_api_key_here
    ```
 
-## Basic Usage
+## Usage
 
-### Tailoring a Resume with a Job Description
+### Basic Usage
 
 ```bash
 python resume_tailor.py path/to/your_resume.tex --job-description "Full job description text goes here"
@@ -39,6 +50,12 @@ python resume_tailor.py path/to/your_resume.tex --job-file path/to/job_descripti
 
 ```bash
 python resume_tailor.py path/to/your_resume.tex --job-description "..." --job-title "Software Engineer" --company "Acme Inc."
+```
+
+### Quiet Mode (No Progress Animation)
+
+```bash
+python resume_tailor.py path/to/your_resume.tex --job-file job.txt --quiet
 ```
 
 ## Application Tracking
@@ -61,28 +78,11 @@ The tool creates:
 2. Log files in the `./resume_logs` directory
 3. An entry in the applications tracking system
 
-## Advanced Options
+## License
 
-### Custom Log Directory
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-```bash
-python resume_tailor.py path/to/your_resume.tex --job-description "..." --log-dir "/path/to/custom/log/directory"
-```
+## Acknowledgments
 
-### Using a Different API Key
-
-```bash
-python resume_tailor.py path/to/your_resume.tex --job-description "..." --api-key "your_alternative_api_key"
-```
-
-## Error Handling
-
-If the tailored resume fails to compile correctly with LaTeX, the tool will raise an error and not save the file. Check the logs for details about the compilation errors.
-
-## Batch Processing (Future Feature)
-
-Support for batch processing multiple job descriptions is planned for a future update. This will allow you to:
-
-1. Provide a directory of job description files
-2. Supply a CSV with job details
-3. Process them all at once to generate multiple tailored resumes
+- Uses the [Anthropic Claude API](https://anthropic.com/) for AI analysis
+- Inspired by the need to optimize job application process
