@@ -1,88 +1,166 @@
 # Resume Tailor
 
-Resume Tailor is a command-line tool that automatically customizes your LaTeX resume for specific job descriptions using AI analysis, making your resume more ATS-friendly and increasing your chances of getting interviews.
+A command-line utility that customizes your LaTeX resume for specific job descriptions using Claude AI to improve ATS compatibility and increase your chances of getting interviews.
 
 ## Features
 
-- **AI-Powered Analysis**: Uses Claude's API to extract key skills and requirements from job descriptions
-- **Smart Customization**: Tailors your resume content to better match job requirements
-- **LaTeX Validation**: Ensures the modified resume compiles correctly
-- **Application Tracking**: Maintains a detailed log of all generated resumes and application statuses
+- **AI-Powered Analysis**: Uses Claude to analyze job descriptions and identify key skills and requirements
+- **Resume Customization**: Intelligently modifies your resume to highlight relevant experience
+- **ATS Optimization**: Ensures your resume includes keywords from the job description
+- **LaTeX Validation**: Automatically verifies that the generated LaTeX compiles correctly
+- **PDF Generation**: Creates both LaTeX and PDF versions of your tailored resume
+- **Application Tracking**: Maintains a log of all your customized resumes and application statuses
+- **Terminal UI**: Includes loading animations and formatted output for a better user experience
 
 ## Installation
 
-1. Clone this repository:
+### Prerequisites
+
+1. Python 3.6 or higher
+2. LaTeX distribution with pdflatex:
+   - **Linux**: `sudo apt-get install texlive-latex-base`
+   - **macOS**: `brew install --cask mactex`
+   - **Windows**: Install MiKTeX or TeX Live
+
+### Setup
+
+1. Clone this repository or download the script:
    ```bash
-   git clone https://github.com/ramirezra4/resume_tailor.git
-   cd resume_tailor
+   git clone https://github.com/yourusername/resume-tailor.git
+   cd resume-tailor
    ```
 
 2. Install required dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install anthropic
    ```
 
-3. Ensure you have a LaTeX compiler installed (pdflatex):
-   - On Ubuntu/Debian: `sudo apt-get install texlive-latex-base`
-   - On macOS with Homebrew: `brew install --cask mactex`
-   - On Windows: Install MiKTeX or TeX Live
-
-4. Set up your Anthropic API key (get one at https://console.anthropic.com/):
+3. Set up your Anthropic API key (get one at https://console.anthropic.com/):
    ```bash
-   export ANTHROPIC_API_KEY=your_api_key_here
+   # For bash/zsh (Linux/macOS)
+   echo 'export ANTHROPIC_API_KEY=your_api_key_here' >> ~/.bashrc
+   source ~/.bashrc
+   
+   # For Windows Command Prompt
+   setx ANTHROPIC_API_KEY your_api_key_here
+   
+   # For Windows PowerShell
+   [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", "your_api_key_here", "User")
    ```
 
 ## Usage
 
-### Basic Usage
+### Creating a Tailored Resume
+
+Basic usage with a job description:
 
 ```bash
-python resume_tailor.py path/to/your_resume.tex --job-description "Full job description text goes here"
+python resume_tailor.py your_resume.tex --job-description "Full job description goes here"
 ```
 
-### Using a Job Description from a File
+Using a file containing the job description:
 
 ```bash
-python resume_tailor.py path/to/your_resume.tex --job-file path/to/job_description.txt
+python resume_tailor.py your_resume.tex --job-file path/to/job_description.txt
 ```
 
-### Adding Job Title and Company Information
+Adding job details for better tracking:
 
 ```bash
-python resume_tailor.py path/to/your_resume.tex --job-description "..." --job-title "Software Engineer" --company "Acme Inc."
+python resume_tailor.py your_resume.tex --job-file job.txt --job-title "Senior Developer" --company "Tech Corp"
 ```
 
-### Quiet Mode (No Progress Animation)
+### Viewing Your Tailored Resumes
+
+List all your previously generated resumes:
 
 ```bash
-python resume_tailor.py path/to/your_resume.tex --job-file job.txt --quiet
+python resume_tailor.py --list
 ```
 
-## Application Tracking
-
-The tool maintains a log of all generated resumes and application statuses in `./resume_logs/applications.json`.
+This shows details like:
+- Resume ID and job title
+- Creation date
+- Application status
+- File locations
+- Company and job link (if provided)
 
 ### Updating Application Status
 
-After applying for a job, update the application status using the resume ID:
+After applying for a job, update the status:
 
 ```bash
 python resume_tailor.py --update 1 --applied --job-link "https://example.com/job" --notes "Applied via company website"
 ```
 
-## Output
+## Output Organization
 
-The tool creates:
+The tool creates an organized directory structure:
 
-1. A new LaTeX file with the tailored resume in the same directory as the original
-2. Log files in the `./resume_logs` directory
-3. An entry in the applications tracking system
+```
+resume_output/               # Main output directory
+├── applications.json        # Application tracking database
+├── resumes/                 # All tailored resumes
+│   ├── your_resume_tailored_JobTitle_20250310.tex  # LaTeX file
+│   └── your_resume_tailored_JobTitle_20250310.pdf  # PDF version
+└── logs/                    # Log files
+    └── resume_tailor_20250310.log
+```
+
+## Advanced Options
+
+### Custom Output Directory
+
+```bash
+python resume_tailor.py your_resume.tex --job-file job.txt --output-dir "/path/to/custom/output"
+```
+
+### Quiet Mode (No Progress Animations)
+
+```bash
+python resume_tailor.py your_resume.tex --job-file job.txt --quiet
+```
+
+### Using a Different API Key
+
+```bash
+python resume_tailor.py your_resume.tex --job-file job.txt --api-key "your_alternative_api_key"
+```
+
+## Example Workflow
+
+1. **Create a tailored resume**:
+   ```bash
+   python resume_tailor.py my_resume.tex --job-file software_engineer_job.txt --job-title "Software Engineer" --company "Tech Corp"
+   ```
+
+2. **Review the tailored resume**:
+   The tool will save both LaTeX and PDF versions in the `resume_output/resumes/` directory.
+
+3. **Apply for the job**:
+   After applying, update the application status:
+   ```bash
+   python resume_tailor.py --update 1 --applied --job-link "https://techcorp.com/careers/12345"
+   ```
+
+4. **Track your applications**:
+   ```bash
+   python resume_tailor.py --list
+   ```
+
+## Future Features
+
+- Batch processing of multiple job descriptions
+- Resume similarity scoring to see how well your resume matches a job
+- Cover letter generation
+- Integration with job application tracking services
+
+## Troubleshooting
+
+- **LaTeX Compilation Errors**: Check the log file in `resume_output/logs/` for detailed error messages
+- **API Key Issues**: Make sure your Anthropic API key is correctly set as an environment variable
+- **Missing Dependencies**: Ensure you have all required Python packages and LaTeX installed
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Uses the [Anthropic Claude API](https://anthropic.com/) for AI analysis
-- Inspired by the need to optimize job application process
+[MIT License](LICENSE)

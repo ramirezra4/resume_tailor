@@ -16,22 +16,97 @@ import subprocess
 import tempfile
 import anthropic
 import re
+import time
+import threading
+import itertools
 from pathlib import Path
+
+
+class Spinner:
+    """A simple terminal spinner for long-running processes."""
+    
+    def __init__(self, message="Working", delay=0.1):
+        """Initialize the spinner.
+        
+        Args:
+            message: The message to display next to the spinner.
+            delay: Time between spinner updates in seconds.
+        """
+        self.message = message
+        self.delay = delay
+        self.spinner_cycle = itertools.cycle(['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'])
+        self.running = False
+        self.spinner_thread = None
+    
+    def spin(self):
+        """The spinner animation function that runs in a thread."""
+        while self.running:
+            sys.stdout.write(f"\r{next(self.spinner_cycle)} {self.message}")
+            sys.stdout.flush()
+            time.sleep(self.delay)
+    
+    def start(self, message=None):
+        """Start the spinner animation.
+        
+        Args:
+            message: Optional new message to display.
+        """
+        if message:
+            self.message = message
+            
+        self.running = True
+        self.spinner_thread = threading.Thread(target=self.spin)
+        self.spinner_thread.daemon = True
+        self.spinner_thread.start()
+    
+    def stop(self, message=None):
+        """Stop the spinner and clear the line.
+        
+        Args:
+            message: Optional completion message to display.
+        """
+        self.running = False
+        if self.spinner_thread:
+            self.spinner_thread.join()
+        
+        # Clear the line
+        sys.stdout.write('\r' + ' ' * (len(self.message) + 10))
+        
+        # Print completion message if provided
+        if message:
+            sys.stdout.write(f"\r{message}")
+        else:
+            sys.stdout.write('\r')
+        
+        sys.stdout.flush()
 
 
 class ResumeTailor:
     """Main class for tailoring resumes to job descriptions."""
 
-    def __init__(self, api_key=None, log_dir=None):
+    def __init__(self, api_key=None, output_dir=None, verbose=True):
         """Initialize the resume tailoring tool.
 
         Args:
             api_key: Anthropic API key. If None, will look for ANTHROPIC_API_KEY environment variable.
-            log_dir: Directory to store logs. If None, defaults to './resume_logs'.
+            output_dir: Directory to store outputs. If None, defaults to './resume_output'.
+            verbose: Whether to show loading animations and status messages.
         """
-        # Setup logging
-        self.log_dir = log_dir or './resume_logs'
+        self.verbose = verbose
+        
+        # Setup loading spinner
+        self.spinner = Spinner()
+        
+        # Setup output directory structure
+        self.output_dir = output_dir or './resume_output'
+        self.resumes_dir = os.path.join(self.output_dir, 'resumes')
+        self.log_dir = os.path.join(self.output_dir, 'logs')
+        
+        # Create all necessary directories
+        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.resumes_dir, exist_ok=True)
         os.makedirs(self.log_dir, exist_ok=True)
+        
         self._setup_logging()
 
         # Initialize Claude client
@@ -43,7 +118,7 @@ class ResumeTailor:
         self.client = anthropic.Anthropic(api_key=self.api_key)
         
         # Log store for applications
-        self.applications_log_file = os.path.join(self.log_dir, 'applications.json')
+        self.applications_log_file = os.path.join(self.output_dir, 'applications.json')
         self.applications = self._load_applications_log()
 
     def _setup_logging(self):
@@ -55,7 +130,7 @@ class ResumeTailor:
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
                 logging.FileHandler(log_file),
-                logging.StreamHandler()
+                logging.StreamHandler() if not self.verbose else logging.NullHandler()
             ]
         )
         
@@ -110,6 +185,9 @@ class ResumeTailor:
         """
         self.logger.info("Analyzing job description with Claude API")
         
+        if self.verbose:
+            self.spinner.start("Analyzing job description with Claude API (this may take a minute)...")
+        
         prompt = f"""
         You are an expert resume tailoring assistant. Your task is to analyze a job description and a resume, then provide guidance on tailoring the resume to better match the job requirements.
 
@@ -152,12 +230,22 @@ class ResumeTailor:
                 json_str = json_match.group(1)
                 analysis = json.loads(json_str)
                 self.logger.info("Successfully analyzed job description")
+                
+                if self.verbose:
+                    self.spinner.stop("✓ Job description analyzed successfully.")
+                
                 return analysis
             else:
+                if self.verbose:
+                    self.spinner.stop("✗ Failed to extract valid data from response.")
+                
                 self.logger.error("Failed to extract JSON from Claude response")
                 raise ValueError("Could not extract valid JSON from the AI response")
                 
         except Exception as e:
+            if self.verbose:
+                self.spinner.stop(f"✗ Error analyzing job description: {e}")
+                
             self.logger.error(f"Error analyzing job description: {e}")
             raise
 
@@ -172,6 +260,9 @@ class ResumeTailor:
             str: Modified LaTeX content.
         """
         self.logger.info("Customizing resume based on analysis")
+        
+        if self.verbose:
+            self.spinner.start("Customizing resume based on job requirements...")
         
         prompt = f"""
         You are an expert LaTeX resume editor. Your task is to modify a LaTeX resume based on analysis to better target a specific job.
@@ -215,9 +306,16 @@ class ResumeTailor:
                 latex_content = re.search(r'```\n([\s\S]*?)\n```', latex_content).group(1)
                 
             self.logger.info("Successfully customized resume")
+            
+            if self.verbose:
+                self.spinner.stop("✓ Resume customized successfully.")
+                
             return latex_content
             
         except Exception as e:
+            if self.verbose:
+                self.spinner.stop(f"✗ Error customizing resume: {e}")
+                
             self.logger.error(f"Error customizing resume: {e}")
             raise
 
@@ -231,6 +329,9 @@ class ResumeTailor:
             bool: True if valid, False otherwise.
         """
         self.logger.info("Validating LaTeX compilation")
+        
+        if self.verbose:
+            self.spinner.start("Validating LaTeX compilation...")
         
         # Create temporary directory for compilation
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -251,17 +352,29 @@ class ResumeTailor:
                 
                 if result.returncode != 0:
                     self.logger.error(f"LaTeX compilation failed: {result.stderr}")
+                    
+                    if self.verbose:
+                        self.spinner.stop("✗ LaTeX compilation failed.")
+                    
                     return False
                 
                 self.logger.info("LaTeX compilation successful")
+                
+                if self.verbose:
+                    self.spinner.stop("✓ LaTeX compilation successful.")
+                
                 return True
                 
             except Exception as e:
                 self.logger.error(f"Error during LaTeX validation: {e}")
+                
+                if self.verbose:
+                    self.spinner.stop(f"✗ Error during LaTeX validation: {e}")
+                
                 return False
 
     def save_tailored_resume(self, latex_content, original_file, job_title=None):
-        """Save the tailored resume to a new file.
+        """Save the tailored resume to the output directory.
         
         Args:
             latex_content: Modified LaTeX content.
@@ -279,7 +392,8 @@ class ResumeTailor:
         job_suffix = f"_{job_title.replace(' ', '_')}" if job_title else ""
         new_filename = f"{base_name}_tailored{job_suffix}_{date_str}.tex"
         
-        new_path = original_path.parent / new_filename
+        # Save to the resumes subdirectory
+        new_path = Path(self.resumes_dir) / new_filename
         
         # Save the file
         with open(new_path, "w", encoding="utf-8") as f:
@@ -287,12 +401,16 @@ class ResumeTailor:
             
         self.logger.info(f"Saved tailored resume to {new_path}")
         
+        # Also save the compiled PDF if validation succeeded
+        pdf_output = self._compile_resume_to_pdf(latex_content, new_path.stem)
+        
         # Add to applications log
         job_entry = {
             "id": len(self.applications) + 1,
             "date_created": datetime.datetime.now().isoformat(),
             "original_resume": str(original_file),
             "tailored_resume": str(new_path),
+            "pdf_resume": pdf_output,
             "job_title": job_title or "Untitled Position",
             "applied": False,
             "application_date": None,
@@ -305,6 +423,55 @@ class ResumeTailor:
         self._save_applications_log()
         
         return str(new_path)
+        
+    def _compile_resume_to_pdf(self, latex_content, base_name):
+        """Compile the LaTeX content to PDF and save in the output directory.
+        
+        Args:
+            latex_content: LaTeX content to compile.
+            base_name: Base name for the output file.
+            
+        Returns:
+            str: Path to the PDF file or None if compilation failed.
+        """
+        # Create path for the PDF
+        pdf_path = os.path.join(self.resumes_dir, f"{base_name}.pdf")
+        
+        # Create temporary directory for compilation
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file = os.path.join(temp_dir, f"{base_name}.tex")
+            
+            # Write content to temporary file
+            with open(temp_file, "w", encoding="utf-8") as f:
+                f.write(latex_content)
+            
+            # Try to compile
+            try:
+                result = subprocess.run(
+                    ["pdflatex", "-interaction=nonstopmode", "-output-directory", temp_dir, temp_file],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                
+                if result.returncode != 0:
+                    self.logger.error(f"PDF compilation failed: {result.stderr}")
+                    return None
+                
+                # Copy the PDF from temp directory to output directory
+                temp_pdf = os.path.join(temp_dir, f"{base_name}.pdf")
+                if os.path.exists(temp_pdf):
+                    import shutil
+                    shutil.copy2(temp_pdf, pdf_path)
+                    self.logger.info(f"Saved PDF version to {pdf_path}")
+                    return pdf_path
+                else:
+                    self.logger.error("PDF file not found after compilation")
+                    return None
+                    
+            except Exception as e:
+                self.logger.error(f"Error during PDF compilation: {e}")
+                return None
 
     def update_application_status(self, resume_id, applied=True, company=None, job_link=None, notes=None):
         """Update the application status in the log.
@@ -354,6 +521,12 @@ class ResumeTailor:
             str: Path to the tailored resume file.
         """
         try:
+            if self.verbose:
+                print(f"📄 Starting resume tailoring process for: {job_title or 'Untitled Position'}")
+                if company:
+                    print(f"🏢 Company: {company}")
+                print()
+            
             # Read the original resume
             original_content = self.read_latex_resume(resume_file)
             
@@ -367,6 +540,10 @@ class ResumeTailor:
             is_valid = self.validate_latex(tailored_content)
             if not is_valid:
                 self.logger.error("Tailored resume failed to compile. Aborting.")
+                
+                if self.verbose:
+                    print("\n❌ Error: Generated LaTeX content does not compile correctly.")
+                
                 raise ValueError("Generated LaTeX content does not compile correctly")
             
             # Save the tailored resume
@@ -379,10 +556,31 @@ class ResumeTailor:
             
             self.logger.info(f"Resume successfully tailored and saved to {new_file_path}")
             
+            if self.verbose:
+                print(f"\n✅ Resume successfully tailored and saved to: {new_file_path}")
+                
+                # Print key insights from the analysis
+                if analysis.get('key_skills'):
+                    print(f"\n🔑 Key skills identified ({len(analysis['key_skills'])}): " + 
+                          ", ".join(analysis['key_skills'][:5]) + 
+                          (f" and {len(analysis['key_skills']) - 5} more..." if len(analysis['key_skills']) > 5 else ""))
+                
+                if analysis.get('missing_skills'):
+                    print(f"⚠️ Missing skills addressed ({len(analysis['missing_skills'])}): " + 
+                          ", ".join(analysis['missing_skills'][:3]) + 
+                          (f" and {len(analysis['missing_skills']) - 3} more..." if len(analysis['missing_skills']) > 3 else ""))
+                
+                if analysis.get('title_suggestions') and len(analysis['title_suggestions']) > 0:
+                    print(f"✏️ Job titles optimized: {len(analysis['title_suggestions'])}")
+                
             return new_file_path
             
         except Exception as e:
             self.logger.error(f"Error tailoring resume: {e}")
+            
+            if self.verbose:
+                print(f"\n❌ Error tailoring resume: {e}")
+                
             raise
 
 
@@ -390,13 +588,14 @@ def main():
     """Command-line entry point."""
     parser = argparse.ArgumentParser(description="Tailor your LaTeX resume to specific job descriptions")
     
-    parser.add_argument("resume_file", help="Path to your original LaTeX resume file")
+    parser.add_argument("resume_file", help="Path to your original LaTeX resume file", nargs="?")
     parser.add_argument("--job-title", help="Job title for the position (used in filename and logs)")
     parser.add_argument("--company", help="Company name for logging purposes")
     parser.add_argument("--api-key", help="Anthropic API key (or set ANTHROPIC_API_KEY environment variable)")
-    parser.add_argument("--log-dir", help="Directory to store logs (default: ./resume_logs)")
+    parser.add_argument("--output-dir", help="Directory to store all outputs (default: ./resume_output)")
+    parser.add_argument("--quiet", "-q", action="store_true", help="Suppress progress animations and detailed output")
     
-    job_desc_group = parser.add_mutually_exclusive_group(required=True)
+    job_desc_group = parser.add_mutually_exclusive_group()
     job_desc_group.add_argument("--job-description", help="Job description text")
     job_desc_group.add_argument("--job-file", help="File containing the job description")
     
@@ -406,10 +605,52 @@ def main():
     parser.add_argument("--job-link", help="Link to the job posting")
     parser.add_argument("--notes", help="Additional notes about the application")
     
+    # Utility options
+    parser.add_argument("--list", action="store_true", help="List all previously created resumes")
+    
     args = parser.parse_args()
     
-    # Initialize the resume tailor
-    tailor = ResumeTailor(api_key=args.api_key, log_dir=args.log_dir)
+    # Initialize the resume tailor with verbosity setting
+    verbose = not args.quiet
+    tailor = ResumeTailor(api_key=args.api_key, output_dir=args.output_dir, verbose=verbose)
+    
+    # List all applications
+    if args.list:
+        if not tailor.applications:
+            print("No resume applications found in the log.")
+            return
+            
+        print("\n=== Resume Applications ===\n")
+        for app in tailor.applications:
+            status = "✅ Applied" if app.get('applied') else "📝 Not Applied"
+            created_date = datetime.datetime.fromisoformat(app.get('date_created')).strftime("%Y-%m-%d")
+            
+            print(f"ID: {app.get('id')} - {app.get('job_title')} - {status}")
+            print(f"  Created: {created_date}")
+            
+            if app.get('company'):
+                print(f"  Company: {app.get('company')}")
+                
+            if app.get('applied') and app.get('application_date'):
+                applied_date = datetime.datetime.fromisoformat(app.get('application_date')).strftime("%Y-%m-%d")
+                print(f"  Applied: {applied_date}")
+                
+            print(f"  Resume: {os.path.basename(app.get('tailored_resume'))}")
+            
+            if app.get('pdf_resume'):
+                print(f"  PDF: {os.path.basename(app.get('pdf_resume'))}")
+                
+            if app.get('job_link'):
+                print(f"  Link: {app.get('job_link')}")
+                
+            if app.get('notes'):
+                print(f"  Notes: {app.get('notes')}")
+                
+            print()
+        
+        print(f"Total: {len(tailor.applications)} resume(s)")
+        print(f"Output directory: {os.path.abspath(tailor.output_dir)}")
+        return
     
     # If updating application status
     if args.update:
@@ -424,6 +665,13 @@ def main():
         else:
             print(f"Failed to update application status for resume ID {args.update}")
         return
+    
+    # Check if we're missing required arguments for tailoring
+    if not args.resume_file:
+        parser.error("resume_file is required unless using --list or --update")
+    
+    if not args.job_description and not args.job_file:
+        parser.error("Either --job-description or --job-file is required")
     
     # Get job description
     job_description = None
@@ -446,8 +694,8 @@ def main():
             company=args.company
         )
         
-        print(f"Resume successfully tailored and saved to: {new_file_path}")
-        print(f"Application ID for future reference: {tailor.applications[-1]['id']}")
+        if verbose:
+            print(f"Application ID for future reference: {tailor.applications[-1]['id']}")
         
     except Exception as e:
         print(f"Error tailoring resume: {e}")
