@@ -1,0 +1,24 @@
+2025-03-10 00:24:07,746 - resume_tailor - INFO - ResumeTailor initialized
+2025-03-10 00:24:07,807 - resume_tailor - INFO - Successfully read LaTeX resume from resume_base.tex
+2025-03-10 00:24:07,807 - resume_tailor - INFO - Analyzing job description with Claude API
+2025-03-10 00:24:16,637 - httpx - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2025-03-10 00:24:16,652 - resume_tailor - INFO - Successfully analyzed job description
+2025-03-10 00:24:16,653 - resume_tailor - INFO - Customizing resume based on analysis
+2025-03-10 00:24:51,561 - httpx - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2025-03-10 00:24:51,578 - resume_tailor - INFO - Successfully customized resume
+2025-03-10 00:24:51,578 - resume_tailor - INFO - Validating LaTeX compilation
+2025-03-10 00:24:52,410 - resume_tailor - INFO - LaTeX compilation successful
+2025-03-10 00:24:52,412 - resume_tailor - INFO - Saved tailored resume to resume_base_tailored_20250310.tex
+2025-03-10 00:24:52,412 - resume_tailor - INFO - Resume successfully tailored and saved to resume_base_tailored_20250310.tex
+2025-03-10 00:32:45,251 - resume_tailor - INFO - ResumeTailor initialized
+2025-03-10 00:32:45,308 - resume_tailor - INFO - Successfully read LaTeX resume from resume_base.tex
+2025-03-10 00:32:45,308 - resume_tailor - INFO - Analyzing job description with Claude API
+2025-03-10 00:32:55,266 - httpx - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2025-03-10 00:32:55,282 - resume_tailor - INFO - Successfully analyzed job description
+2025-03-10 00:32:55,282 - resume_tailor - INFO - Customizing resume based on analysis
+2025-03-10 00:33:30,824 - httpx - INFO - HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2025-03-10 00:33:30,834 - resume_tailor - INFO - Successfully customized resume
+2025-03-10 00:33:30,835 - resume_tailor - INFO - Validating LaTeX compilation
+2025-03-10 00:33:31,669 - resume_tailor - INFO - LaTeX compilation successful
+2025-03-10 00:33:31,671 - resume_tailor - INFO - Saved tailored resume to resume_base_tailored_20250310.tex
+2025-03-10 00:33:31,671 - resume_tailor - INFO - Resume successfully tailored and saved to resume_base_tailored_20250310.tex
