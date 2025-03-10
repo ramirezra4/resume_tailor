@@ -19,10 +19,19 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+venv/
+env/
+ENV/
+.python-version
 
 # Log files
 resume_logs/
+logs/
 *.log
+
+# Application output and data
+resume_output/
+applications.json
 *.json
 
 # IDE specific files
@@ -30,11 +39,21 @@ resume_logs/
 .vscode/
 *.swp
 *.swo
+*.sublime-workspace
+*.sublime-project
+.project
+.pydevproject
+.settings/
 
 # Environment variables
 .env
+.env.local
+.env.development
+.env.test
+.env.production
 
 # LaTeX files
+## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
 *.log
@@ -55,6 +74,66 @@ resume_logs/
 *.eps
 *.tex~
 
+## Generated if empty string is given at "Please type another file name for output:"
+.pdf
+
+## Bibliography auxiliary files (bibtex/biblatex/biber):
+*.bbl
+*.bcf
+*.blg
+*-blx.aux
+*-blx.bib
+*.run.xml
+
+## Build tool auxiliary files:
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.synctex.gz(busy)
+*.pdfsync
+
+## Build tool directories for auxiliary files
+# latexrun
+latex.out/
+
+## Auxiliary and intermediate files from other packages:
+# algorithms
+*.alg
+*.loa
+
+# achemso
+acs-*.bib
+
+# amsthm
+*.thm
+
+# beamer
+*.nav
+*.pre
+*.snm
+*.vrb
+
+# changes
+*.soc
+
+# comment
+*.cut
+
+# cprotect
+*.cpt
+
+# elsarticle (documentclass of Elsevier journals)
+*.spl
+
+# endnotes
+*.ent
+
 # OS specific files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
