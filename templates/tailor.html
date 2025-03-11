@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Resume Tailor - Customize Your Resume{% endblock %}
+
+{% block extra_head %}
+<style>
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Tailor Your Resume</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="tailorForm">
+                    <div class="mb-3">
+                        <label for="resumeFile" class="form-label">Upload Your LaTeX Resume (.tex)</label>
+                        <input type="file" class="form-control" id="resumeFile" name="resume_file" accept=".tex" required>
+                        <div class="form-text">Only LaTeX (.tex) files are supported</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="jobTitle" class="form-label">Job Title</label>
+                        <input type="text" class="form-control" id="jobTitle" name="job_title" placeholder="e.g., Software Engineer">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="company" class="form-label">Company</label>
+                        <input type="text" class="form-control" id="company" name="company" placeholder="e.g., Tech Corp">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="jobDescription" class="form-label">Job Description</label>
+                        <textarea class="form-control" id="jobDescription" name="job_description" rows="12" required></textarea>
+                        <div class="form-text">Paste the full job description here</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">Tailor Resume</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <h3 class="text-white">Customizing your resume...</h3>
+    <p class="text-white">This may take a minute or two. Please don't close the browser.</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('tailorForm').addEventListener('submit', function() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        document.getElementById('submitBtn').disabled = true;
+    });
+</script>
+{% endblock %}

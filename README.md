@@ -148,12 +148,46 @@ python resume_tailor.py your_resume.tex --job-file job.txt --api-key "your_alter
    python resume_tailor.py --list
    ```
 
+## Web Application
+
+The Resume Tailor now includes a web interface that makes it even easier to manage your resume tailoring process.
+
+### Running the Web App
+
+1. Install the additional requirements:
+   ```bash
+   pip install flask python-dotenv
+   ```
+
+2. Set up your environment variables by copying the example file:
+   ```bash
+   cp .env.example .env
+   ```
+   
+3. Edit the `.env` file to add your Anthropic API key and a secure secret key
+
+4. Run the web server:
+   ```bash
+   python app.py
+   ```
+
+5. Open your browser to `http://localhost:5000`
+
+### Web Features
+
+- **User-friendly Interface**: No need to remember command-line arguments
+- **Resume Upload**: Simply upload your LaTeX resume file through the browser
+- **Job Description Input**: Paste job descriptions directly into the web form
+- **Status Tracking**: Easily view and update application statuses
+- **File Management**: Download tailored resumes and PDFs directly from the app
+
 ## Future Features
 
 - Batch processing of multiple job descriptions
 - Resume similarity scoring to see how well your resume matches a job
 - Cover letter generation
 - Integration with job application tracking services
+- OAuth authentication for multi-user support
 
 ## Troubleshooting
 

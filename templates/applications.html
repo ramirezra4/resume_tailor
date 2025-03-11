@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Resume Tailor - My Applications{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>My Applications</h2>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('tailor_resume') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tailor New Resume
+        </a>
+    </div>
+</div>
+
+{% if applications %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Job Title</th>
+                    <th>Company</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th>Files</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td>{{ app.id }}</td>
+                    <td>{{ app.job_title }}</td>
+                    <td>{{ app.company or 'Not specified' }}</td>
+                    <td>{{ app.date_created.split('T')[0] if 'T' in app.date_created else app.date_created }}</td>
+                    <td>
+                        {% if app.applied %}
+                            <span class="badge bg-success">Applied</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Not Applied</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('download_file', filename=app.tailored_resume) }}" class="btn btn-sm btn-outline-secondary">TEX</a>
+                            {% if app.pdf_resume %}
+                            <a href="{{ url_for('download_file', filename=app.pdf_resume) }}" class="btn btn-sm btn-outline-primary">PDF</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('result', application_id=app.id) }}" class="btn btn-sm btn-info">Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <p>You haven't tailored any resumes yet.</p>
+        <a href="{{ url_for('tailor_resume') }}" class="btn btn-primary">Get Started</a>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Resume Tailor - Home{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">Resume Tailor</h1>
+        <p class="lead">
+            Customize your LaTeX resume for specific job descriptions using AI to improve ATS compatibility and increase your chances of getting interviews.
+        </p>
+        
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center mt-5">
+            <a href="{{ url_for('tailor_resume') }}" class="btn btn-primary btn-lg px-4 gap-3">
+                Tailor Your Resume
+            </a>
+            <a href="{{ url_for('list_applications') }}" class="btn btn-outline-secondary btn-lg px-4">
+                View Past Applications
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">AI-Powered Analysis</h5>
+                <p class="card-text">Uses Claude to analyze job descriptions and identify key skills and requirements that are relevant to your target position.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Resume Customization</h5>
+                <p class="card-text">Intelligently modifies your resume to highlight relevant experiences and skills based on the job description.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">ATS Optimization</h5>
+                <p class="card-text">Ensures your resume includes keywords from the job description to pass through Applicant Tracking Systems.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

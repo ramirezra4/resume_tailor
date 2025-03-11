@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Resume Tailor - Result{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <h2>Resume Details</h2>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('list_applications') }}" class="btn btn-outline-secondary">
+            Back to Applications
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">{{ application.job_title }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Company:</div>
+                    <div class="col-md-8">{{ application.company or 'Not specified' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Created:</div>
+                    <div class="col-md-8">{{ application.date_created.split('T')[0] if 'T' in application.date_created else application.date_created }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Status:</div>
+                    <div class="col-md-8">
+                        {% if application.applied %}
+                            <span class="badge bg-success">Applied</span>
+                            ({{ application.application_date.split('T')[0] if application.application_date and 'T' in application.application_date else application.application_date or '' }})
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Not Applied</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if application.job_link %}
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Job Link:</div>
+                    <div class="col-md-8">
+                        <a href="{{ application.job_link }}" target="_blank">{{ application.job_link }}</a>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Files:</div>
+                    <div class="col-md-8">
+                        <div class="btn-group">
+                            <a href="{{ url_for('download_file', filename=application.tailored_resume) }}" class="btn btn-outline-secondary">Download LaTeX</a>
+                            {% if application.pdf_resume %}
+                            <a href="{{ url_for('download_file', filename=application.pdf_resume) }}" class="btn btn-outline-primary">Download PDF</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if application.notes %}
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Notes:</div>
+                    <div class="col-md-8">{{ application.notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Update Status</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('update_application', application_id=application.id) }}">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="applied" name="applied" {% if application.applied %}checked{% endif %}>
+                        <label class="form-check-label" for="applied">
+                            I've applied for this job
+                        </label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="company" class="form-label">Company</label>
+                        <input type="text" class="form-control" id="company" name="company" value="{{ application.company or '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="jobLink" class="form-label">Job Link</label>
+                        <input type="url" class="form-control" id="jobLink" name="job_link" value="{{ application.job_link or '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3">{{ application.notes or '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
