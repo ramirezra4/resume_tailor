@@ -14,11 +14,48 @@
     </div>
 </div>
 
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('list_applications', filter='all') }}" class="btn btn-outline-secondary {{ 'active' if request.args.get('filter') == 'all' or not request.args.get('filter') }}">
+                All
+            </a>
+            <a href="{{ url_for('list_applications', filter='applied') }}" class="btn btn-outline-secondary {{ 'active' if request.args.get('filter') == 'applied' }}">
+                Applied
+            </a>
+            <a href="{{ url_for('list_applications', filter='not_applied') }}" class="btn btn-outline-secondary {{ 'active' if request.args.get('filter') == 'not_applied' }}">
+                Not Applied
+            </a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <form class="d-flex" method="get" action="{{ url_for('list_applications') }}">
+            <input class="form-control me-2" type="search" name="search" placeholder="Search by job title or company" value="{{ request.args.get('search', '') }}">
+            <button class="btn btn-outline-primary" type="submit">Search</button>
+        </form>
+    </div>
+</div>
+
 {% if applications %}
+    <form id="bulkActionForm" method="post" action="{{ url_for('bulk_actions') }}">
+        <div class="mb-3">
+            <button type="button" id="bulkApplyBtn" class="btn btn-sm btn-success me-2" disabled>Mark Selected as Applied</button>
+            <button type="button" id="bulkUnapplyBtn" class="btn btn-sm btn-warning me-2" disabled>Mark Selected as Not Applied</button>
+            <button type="button" id="bulkDeleteBtn" class="btn btn-sm btn-danger" disabled>Delete Selected</button>
+        </div>
+        <input type="hidden" name="action" id="bulkAction" value="">
+        <input type="hidden" name="selected_ids" id="selectedIds" value="">
+    </form>
+    
     <div class="table-responsive">
         <table class="table table-hover">
             <thead class="table-light">
                 <tr>
+                    <th>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAll">
+                        </div>
+                    </th>
                     <th>ID</th>
                     <th>Job Title</th>
                     <th>Company</th>
@@ -31,6 +68,11 @@
             <tbody>
                 {% for app in applications %}
                 <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input app-select" type="checkbox" value="{{ app.id }}" name="selected_apps">
+                        </div>
+                    </td>
                     <td>{{ app.id }}</td>
                     <td>{{ app.job_title }}</td>
                     <td>{{ app.company or 'Not specified' }}</td>
@@ -51,7 +93,16 @@
                         </div>
                     </td>
                     <td>
-                        <a href="{{ url_for('result', application_id=app.id) }}" class="btn btn-sm btn-info">Details</a>
+                        <div class="btn-group">
+                            <a href="{{ url_for('result', application_id=app.id) }}" class="btn btn-sm btn-info">Details</a>
+                            <button type="button" class="btn btn-sm btn-success quick-status-toggle" 
+                                data-id="{{ app.id }}" 
+                                data-applied="{{ app.applied|lower }}"
+                                data-bs-toggle="tooltip" 
+                                title="{{ 'Mark as not applied' if app.applied else 'Mark as applied' }}">
+                                <i class="bi bi-{{ 'check-square' if app.applied else 'square' }}"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -64,4 +115,101 @@
         <a href="{{ url_for('tailor_resume') }}" class="btn btn-primary">Get Started</a>
     </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Quick status toggle functionality
+    document.querySelectorAll('.quick-status-toggle').forEach(button => {
+        button.addEventListener('click', function() {
+            const appId = this.getAttribute('data-id');
+            const currentApplied = this.getAttribute('data-applied') === 'true';
+            
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/quick_update/${appId}`;
+            
+            const appliedInput = document.createElement('input');
+            appliedInput.type = 'hidden';
+            appliedInput.name = 'applied';
+            appliedInput.value = !currentApplied;
+            
+            form.appendChild(appliedInput);
+            document.body.appendChild(form);
+            form.submit();
+        });
+    });
+    
+    // Bulk actions functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const appCheckboxes = document.querySelectorAll('.app-select');
+    const bulkActionForm = document.getElementById('bulkActionForm');
+    const bulkApplyBtn = document.getElementById('bulkApplyBtn');
+    const bulkUnapplyBtn = document.getElementById('bulkUnapplyBtn');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkActionInput = document.getElementById('bulkAction');
+    const selectedIdsInput = document.getElementById('selectedIds');
+    
+    // Toggle all checkboxes
+    selectAllCheckbox.addEventListener('change', function() {
+        const isChecked = this.checked;
+        appCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+        updateBulkButtons();
+    });
+    
+    // Update button states when individual checkboxes change
+    appCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkButtons);
+    });
+    
+    // Set up bulk action buttons
+    bulkApplyBtn.addEventListener('click', function() {
+        if (confirm('Mark selected applications as Applied?')) {
+            bulkActionInput.value = 'apply';
+            submitBulkAction();
+        }
+    });
+    
+    bulkUnapplyBtn.addEventListener('click', function() {
+        if (confirm('Mark selected applications as Not Applied?')) {
+            bulkActionInput.value = 'unapply';
+            submitBulkAction();
+        }
+    });
+    
+    bulkDeleteBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to delete the selected applications? This cannot be undone.')) {
+            bulkActionInput.value = 'delete';
+            submitBulkAction();
+        }
+    });
+    
+    // Helper function to update button states
+    function updateBulkButtons() {
+        const checkedCount = document.querySelectorAll('.app-select:checked').length;
+        bulkApplyBtn.disabled = checkedCount === 0;
+        bulkUnapplyBtn.disabled = checkedCount === 0;
+        bulkDeleteBtn.disabled = checkedCount === 0;
+    }
+    
+    // Helper function to submit the form
+    function submitBulkAction() {
+        const selectedIds = [];
+        document.querySelectorAll('.app-select:checked').forEach(checkbox => {
+            selectedIds.push(checkbox.value);
+        });
+        
+        selectedIdsInput.value = selectedIds.join(',');
+        bulkActionForm.submit();
+    }
+</script>
 {% endblock %}

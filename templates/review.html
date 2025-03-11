@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block title %}Resume Tailor - Review Changes{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Review Suggested Changes</h2>
+        <p class="lead">Select the changes you'd like to apply to your resume</p>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Job Details</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Job Title:</strong> {{ job_title or 'Not specified' }}</p>
+                <p><strong>Company:</strong> {{ company or 'Not specified' }}</p>
+                <p><strong>Resume File:</strong> {{ resume_file_path.split('/')[-1] }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Instructions</h5>
+            </div>
+            <div class="card-body">
+                <p>Review each suggested change and check the boxes for changes you want to apply.</p>
+                <p>Only select skills that you genuinely possess - honesty is important!</p>
+                <p>When you're done, click "Apply Selected Changes" at the bottom of the page.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post" action="{{ url_for('review_changes') }}">
+    <div class="row">
+        <div class="col-md-8">
+            {% if analysis.key_skills %}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Key Skills Identified</h5>
+                    <button type="button" class="btn btn-sm btn-light select-all" data-group="key-skills">Select All</button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">These are important skills mentioned in the job description that should be emphasized in your resume.</p>
+                    <div class="row">
+                        {% for skill in analysis.key_skills %}
+                        <div class="col-md-4 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input key-skills-check" type="checkbox" id="skill_{{ loop.index0 }}" name="skill_{{ loop.index0 }}" checked>
+                                <label class="form-check-label" for="skill_{{ loop.index0 }}">{{ skill }}</label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if analysis.missing_skills %}
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Missing Skills</h5>
+                    <button type="button" class="btn btn-sm btn-light select-all" data-group="missing-skills">Select All</button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted"><strong>Important:</strong> Only select skills that you genuinely possess but haven't mentioned in your resume.</p>
+                    <div class="row">
+                        {% for skill in analysis.missing_skills %}
+                        <div class="col-md-4 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input missing-skills-check" type="checkbox" id="missing_{{ loop.index0 }}" name="missing_{{ loop.index0 }}">
+                                <label class="form-check-label" for="missing_{{ loop.index0 }}">{{ skill }}</label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if analysis.title_suggestions %}
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Job Title Suggestions (Not Recommended)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>Warning:</strong> Changing job titles is generally not recommended as it can be seen as misrepresentation. Instead, focus on emphasizing relevant skills and accomplishments within your actual experience.
+                    </div>
+                    
+                    <p class="text-muted">For your reference only, the system suggested these title modifications:</p>
+                    <ul class="list-group">
+                        {% for original, suggested in analysis.title_suggestions.items() %}
+                        <li class="list-group-item">
+                            From "<span class="text-danger">{{ original }}</span>" to "<span class="text-success">{{ suggested }}</span>"
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if analysis.experience_suggestions %}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Experience Description Improvements</h5>
+                    <button type="button" class="btn btn-sm btn-light select-all" data-group="experience-suggestions">Select All</button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Suggestions for enhancing your experience descriptions to highlight relevant skills.</p>
+                    <div class="list-group">
+                        {% for section, content in analysis.experience_suggestions.items() %}
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input experience-suggestions-check" type="checkbox" id="exp_{{ section|replace(' ', '_') }}" name="exp_{{ section|replace(' ', '_') }}">
+                                <label class="form-check-label" for="exp_{{ section|replace(' ', '_') }}">
+                                    <strong>For {{ section }}:</strong>
+                                    <div class="text-muted mt-1">{{ content }}</div>
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if analysis.content_additions %}
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Content Additions</h5>
+                    <button type="button" class="btn btn-sm btn-light select-all" data-group="content-additions">Select All</button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Suggestions for additional content to add to your resume.</p>
+                    <div class="list-group">
+                        {% for section, content in analysis.content_additions.items() %}
+                        <div class="list-group-item">
+                            <div class="form-check">
+                                <input class="form-check-input content-additions-check" type="checkbox" id="add_{{ section|replace(' ', '_') }}" name="add_{{ section|replace(' ', '_') }}">
+                                <label class="form-check-label" for="add_{{ section|replace(' ', '_') }}">
+                                    <strong>In {{ section }}:</strong>
+                                    <div class="text-muted mt-1">{{ content }}</div>
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="d-grid gap-2 my-4">
+                <button type="submit" class="btn btn-primary btn-lg">Apply Selected Changes</button>
+                <a href="{{ url_for('tailor_resume') }}" class="btn btn-outline-secondary">Cancel & Start Over</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Selected Changes</h5>
+                </div>
+                <div class="card-body" id="selected-changes-summary">
+                    <p class="text-muted" id="no-changes-message">No changes selected yet.</p>
+                    
+                    <div id="selected-key-skills" class="d-none">
+                        <h6 class="mt-3">Key Skills to Emphasize</h6>
+                        <ul class="list-group mb-3" id="key-skills-list"></ul>
+                    </div>
+                    
+                    <div id="selected-missing-skills" class="d-none">
+                        <h6 class="mt-3">Missing Skills to Add</h6>
+                        <ul class="list-group mb-3" id="missing-skills-list"></ul>
+                    </div>
+                    
+                    <!-- Title changes section removed as per request -->
+                    
+                    <div id="selected-experience-improvements" class="d-none">
+                        <h6 class="mt-3">Experience Improvements</h6>
+                        <ul class="list-group mb-3" id="experience-improvements-list"></ul>
+                    </div>
+                    
+                    <div id="selected-content-additions" class="d-none">
+                        <h6 class="mt-3">Content Additions</h6>
+                        <ul class="list-group mb-3" id="content-additions-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Function to update the selected changes summary
+    function updateSelectedChangesSummary() {
+        // Count total selected changes
+        const keySkillsChecked = document.querySelectorAll('.key-skills-check:checked').length;
+        const missingSkillsChecked = document.querySelectorAll('.missing-skills-check:checked').length;
+        const experienceChangesChecked = document.querySelectorAll('.experience-suggestions-check:checked').length;
+        const contentAdditionsChecked = document.querySelectorAll('.content-additions-check:checked').length;
+        
+        const totalChecked = keySkillsChecked + missingSkillsChecked + 
+                            experienceChangesChecked + contentAdditionsChecked;
+        
+        // Show/hide "no changes" message
+        const noChangesMessage = document.getElementById('no-changes-message');
+        if (totalChecked === 0) {
+            noChangesMessage.classList.remove('d-none');
+        } else {
+            noChangesMessage.classList.add('d-none');
+        }
+        
+        // Update key skills section
+        updateSkillsList('key-skills-check', 'selected-key-skills', 'key-skills-list');
+        
+        // Update missing skills section
+        updateSkillsList('missing-skills-check', 'selected-missing-skills', 'missing-skills-list');
+        
+        // Title changes section removed
+        
+        // Update experience improvements section
+        updateExperienceList();
+        
+        // Update content additions section
+        updateContentAdditionsList();
+    }
+    
+    // Helper function to update skills lists
+    function updateSkillsList(checkboxClass, containerID, listID) {
+        const container = document.getElementById(containerID);
+        const list = document.getElementById(listID);
+        const checkedSkills = document.querySelectorAll(`.${checkboxClass}:checked`);
+        
+        list.innerHTML = '';
+        
+        if (checkedSkills.length > 0) {
+            container.classList.remove('d-none');
+            checkedSkills.forEach(checkbox => {
+                const skill = checkbox.nextElementSibling.textContent.trim();
+                const li = document.createElement('li');
+                li.className = 'list-group-item py-1 px-2';
+                li.textContent = skill;
+                list.appendChild(li);
+            });
+        } else {
+            container.classList.add('d-none');
+        }
+    }
+    
+    // Title changes function removed
+    
+    // Helper function to update experience improvements list
+    function updateExperienceList() {
+        const container = document.getElementById('selected-experience-improvements');
+        const list = document.getElementById('experience-improvements-list');
+        const checkedExperiences = document.querySelectorAll('.experience-suggestions-check:checked');
+        
+        list.innerHTML = '';
+        
+        if (checkedExperiences.length > 0) {
+            container.classList.remove('d-none');
+            checkedExperiences.forEach(checkbox => {
+                const labelText = checkbox.nextElementSibling.querySelector('strong').textContent.trim();
+                const li = document.createElement('li');
+                li.className = 'list-group-item py-1 px-2';
+                li.textContent = labelText;
+                list.appendChild(li);
+            });
+        } else {
+            container.classList.add('d-none');
+        }
+    }
+    
+    // Helper function to update content additions list
+    function updateContentAdditionsList() {
+        const container = document.getElementById('selected-content-additions');
+        const list = document.getElementById('content-additions-list');
+        const checkedAdditions = document.querySelectorAll('.content-additions-check:checked');
+        
+        list.innerHTML = '';
+        
+        if (checkedAdditions.length > 0) {
+            container.classList.remove('d-none');
+            checkedAdditions.forEach(checkbox => {
+                const labelText = checkbox.nextElementSibling.querySelector('strong').textContent.trim();
+                const li = document.createElement('li');
+                li.className = 'list-group-item py-1 px-2';
+                li.textContent = labelText;
+                list.appendChild(li);
+            });
+        } else {
+            container.classList.add('d-none');
+        }
+    }
+    
+    // Add event listeners to all checkboxes
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedChangesSummary);
+    });
+    
+    // Handle "Select All" buttons
+    document.querySelectorAll('.select-all').forEach(button => {
+        button.addEventListener('click', function() {
+            const group = this.getAttribute('data-group');
+            const checkboxes = document.querySelectorAll(`.${group}-check`);
+            const allChecked = Array.from(checkboxes).every(c => c.checked);
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !allChecked;
+            });
+            
+            updateSelectedChangesSummary();
+        });
+    });
+    
+    // Initialize summary on page load
+    document.addEventListener('DOMContentLoaded', updateSelectedChangesSummary);
+</script>
+{% endblock %}
