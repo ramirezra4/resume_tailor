@@ -1,16 +1,19 @@
 # Resume Tailor
 
-A command-line utility that customizes your LaTeX resume for specific job descriptions using Claude AI to improve ATS compatibility and increase your chances of getting interviews.
+A tool that ethically customizes your LaTeX resume for specific job descriptions using Claude AI to improve ATS compatibility while maintaining accuracy and honesty in your application.
 
 ## Features
 
 - **AI-Powered Analysis**: Uses Claude to analyze job descriptions and identify key skills and requirements
 - **Resume Customization**: Intelligently modifies your resume to highlight relevant experience
-- **ATS Optimization**: Ensures your resume includes keywords from the job description
+- **Human-in-the-Loop Review**: Review and approve each suggested change before applying it
+- **ATS Optimization**: Ensures your resume includes relevant keywords from the job description
+- **Ethical Guidelines**: Prevents misrepresentation by focusing on truthful highlighting of skills
 - **LaTeX Validation**: Automatically verifies that the generated LaTeX compiles correctly
 - **PDF Generation**: Creates both LaTeX and PDF versions of your tailored resume
 - **Application Tracking**: Maintains a log of all your customized resumes and application statuses
 - **Terminal UI**: Includes loading animations and formatted output for a better user experience
+- **Web Interface**: User-friendly browser UI for managing the entire resume customization process
 
 ## Installation
 
@@ -178,8 +181,39 @@ The Resume Tailor now includes a web interface that makes it even easier to mana
 - **User-friendly Interface**: No need to remember command-line arguments
 - **Resume Upload**: Simply upload your LaTeX resume file through the browser
 - **Job Description Input**: Paste job descriptions directly into the web form
+- **Interactive Review**: Review and selectively approve AI-suggested changes before applying them
 - **Status Tracking**: Easily view and update application statuses
 - **File Management**: Download tailored resumes and PDFs directly from the app
+
+## AI Prompt Architecture
+
+The Resume Tailor uses a carefully designed multi-stage prompt system:
+
+### 1. Job Analysis Prompt
+- **Purpose**: Extracts key information from job descriptions without fabrication
+- **Structure**: 
+  - Instructs Claude to analyze the job for required skills, responsibilities, and qualifications
+  - Requests output in structured JSON format for consistent parsing
+  - Explicitly prevents fabrication by requiring evidence from the job description
+  - Focuses on identifying missing skills rather than encouraging embellishment
+
+### 2. User Review Interface
+- **Purpose**: Gives users full control over which AI suggestions to incorporate
+- **Design Philosophy**: 
+  - Presents suggested modifications categorized by type (skills, experience, content)
+  - Uses checkboxes for explicit approval of each change
+  - Includes warnings against selecting skills you don't actually possess
+  - Prevents job title modifications that could be seen as misrepresentation
+
+### 3. Customization Prompt
+- **Purpose**: Applies only approved changes to the resume
+- **Structure**:
+  - Dynamically built based on user-selected changes
+  - Provides original LaTeX content alongside approved modifications
+  - Includes specific instructions for maintaining proper LaTeX syntax
+  - Focuses on truthful highlighting rather than fabrication
+
+This architecture balances AI assistance with ethical considerations and user control to create resumes that are both effective and honest.
 
 ## Future Features
 
@@ -188,6 +222,9 @@ The Resume Tailor now includes a web interface that makes it even easier to mana
 - Cover letter generation
 - Integration with job application tracking services
 - OAuth authentication for multi-user support
+- Expanded ethics controls and transparency features
+- Alternative resume formats beyond LaTeX
+- Additional personalization options with more granular control
 
 ## Troubleshooting
 
