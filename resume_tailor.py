@@ -19,6 +19,7 @@ import re
 import time
 import threading
 import itertools
+import csv
 from pathlib import Path
 
 
@@ -117,6 +118,17 @@ class ResumeTailor:
         
         self.client = anthropic.Anthropic(api_key=self.api_key)
         
+        # Token usage tracking
+        self.token_usage = {
+            'analysis_prompt_tokens': 0,
+            'analysis_completion_tokens': 0,
+            'customization_prompt_tokens': 0,
+            'customization_completion_tokens': 0,
+            'total_prompt_tokens': 0,
+            'total_completion_tokens': 0
+        }
+        self.token_log_file = os.path.join(self.log_dir, "token_usage.csv")
+        
         # Log store for applications
         self.applications_log_file = os.path.join(self.output_dir, 'applications.json')
         self.applications = self._load_applications_log()
@@ -136,6 +148,66 @@ class ResumeTailor:
         
         self.logger = logging.getLogger('resume_tailor')
         self.logger.info("ResumeTailor initialized")
+        
+    def _log_token_usage(self, operation_type, job_identifier, prompt_tokens, completion_tokens):
+        """Log token usage to a CSV file.
+        
+        Args:
+            operation_type: Type of operation (analysis, customization)
+            job_identifier: Job title or identifier
+            prompt_tokens: Number of prompt tokens used
+            completion_tokens: Number of completion tokens used
+        """
+        file_exists = os.path.isfile(self.token_log_file)
+        
+        with open(self.token_log_file, 'a', newline='') as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(['timestamp', 'operation', 'job', 'prompt_tokens', 
+                                'completion_tokens', 'total_tokens', 'cost_estimate_usd'])
+            
+            # Calculate approximate cost (prices as of March 2025)
+            # Claude 3.7 Sonnet: $15/million tokens input, $75/million tokens output
+            input_cost = (prompt_tokens / 1000000) * 15
+            output_cost = (completion_tokens / 1000000) * 75
+            total_cost = input_cost + output_cost
+            
+            timestamp = datetime.datetime.now().isoformat()
+            total_tokens = prompt_tokens + completion_tokens
+            
+            writer.writerow([
+                timestamp,
+                operation_type,
+                job_identifier,
+                prompt_tokens,
+                completion_tokens,
+                total_tokens,
+                f"{total_cost:.6f}"
+            ])
+            
+        self.logger.info(
+            f"Token usage for {operation_type} - {job_identifier}: "
+            f"{prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total"
+        )
+        
+    def get_token_usage_stats(self):
+        """Return token usage statistics and estimated costs.
+        
+        Returns:
+            dict: Token usage statistics and cost estimates
+        """
+        # Calculate costs
+        input_cost = (self.token_usage['total_prompt_tokens'] / 1000000) * 15
+        output_cost = (self.token_usage['total_completion_tokens'] / 1000000) * 75
+        total_cost = input_cost + output_cost
+        
+        stats = self.token_usage.copy()
+        stats.update({
+            'total_tokens': stats['total_prompt_tokens'] + stats['total_completion_tokens'],
+            'cost_estimate_usd': total_cost
+        })
+        
+        return stats
 
     def _load_applications_log(self):
         """Load the applications log file or create if it doesn't exist."""
@@ -224,6 +296,18 @@ class ResumeTailor:
                 messages=[{"role": "user", "content": prompt}]
             )
             
+            # Log token usage
+            input_tokens = response.usage.input_tokens
+            output_tokens = response.usage.output_tokens
+            
+            self.token_usage['analysis_prompt_tokens'] += input_tokens
+            self.token_usage['analysis_completion_tokens'] += output_tokens
+            self.token_usage['total_prompt_tokens'] += input_tokens
+            self.token_usage['total_completion_tokens'] += output_tokens
+            
+            # Log to file with job details
+            self._log_token_usage("analysis", job_title or "Untitled Position", input_tokens, output_tokens)
+            
             # Extract JSON from the response
             response_text = response.content[0].text
             # Find JSON content (in case there's additional text)
@@ -305,6 +389,21 @@ class ResumeTailor:
                 system="You are an expert LaTeX editor specializing in ATS-optimized resumes. Return only valid LaTeX code with no additional text.",
                 messages=[{"role": "user", "content": prompt}]
             )
+            
+            # Log token usage
+            input_tokens = response.usage.input_tokens
+            output_tokens = response.usage.output_tokens
+            
+            self.token_usage['customization_prompt_tokens'] += input_tokens
+            self.token_usage['customization_completion_tokens'] += output_tokens
+            self.token_usage['total_prompt_tokens'] += input_tokens
+            self.token_usage['total_completion_tokens'] += output_tokens
+            
+            # Get job title from analysis if available
+            job_title = analysis.get('exact_job_title', 'Untitled Position') if analysis else 'Untitled Position'
+            
+            # Log to file with job details
+            self._log_token_usage("customization", job_title, input_tokens, output_tokens)
             
             # Extract LaTeX content
             response_text = response.content[0].text
@@ -583,6 +682,12 @@ class ResumeTailor:
                 
                 if analysis.get('title_suggestions') and len(analysis['title_suggestions']) > 0:
                     print(f"✏️ Job titles optimized: {len(analysis['title_suggestions'])}")
+                    
+                # Print token usage statistics
+                token_stats = self.get_token_usage_stats()
+                total_tokens = token_stats['total_tokens']
+                cost = token_stats['cost_estimate_usd']
+                print(f"\n📊 Total tokens used: {total_tokens:,} (estimated cost: ${cost:.4f})")
                 
             return new_file_path
             

@@ -9,6 +9,7 @@ A tool that ethically customizes your LaTeX resume for specific job descriptions
 - **Human-in-the-Loop Review**: Review and approve each suggested change before applying it
 - **ATS Optimization**: Ensures your resume includes relevant keywords from the job description
 - **Ethical Guidelines**: Prevents misrepresentation by focusing on truthful highlighting of skills
+- **Token Usage Tracking**: Monitors API usage and estimates costs for each resume customization
 - **LaTeX Validation**: Automatically verifies that the generated LaTeX compiles correctly
 - **PDF Generation**: Creates both LaTeX and PDF versions of your tailored resume
 - **Application Tracking**: Maintains a log of all your customized resumes and application statuses
@@ -107,7 +108,8 @@ resume_output/               # Main output directory
 │   ├── your_resume_tailored_JobTitle_20250310.tex  # LaTeX file
 │   └── your_resume_tailored_JobTitle_20250310.pdf  # PDF version
 └── logs/                    # Log files
-    └── resume_tailor_20250310.log
+    ├── resume_tailor_20250310.log                  # Application logs
+    └── token_usage.csv                             # Token usage tracking
 ```
 
 ## Advanced Options
@@ -226,11 +228,51 @@ This architecture balances AI assistance with ethical considerations and user co
 - Alternative resume formats beyond LaTeX
 - Additional personalization options with more granular control
 
+## Token Usage Tracking
+
+Resume Tailor includes built-in token usage tracking to help you monitor API usage and estimate costs:
+
+### CLI Token Usage
+
+When using the command-line interface, token usage information is displayed after each resume tailoring operation:
+
+```
+📊 Total tokens used: 12,345 (estimated cost: $0.2345)
+```
+
+### Token Usage Logs
+
+Detailed token usage is logged to a CSV file in the `resume_output/logs/` directory:
+
+```
+resume_output/logs/token_usage.csv
+```
+
+This file includes:
+- Timestamp of each operation
+- Operation type (analysis, customization)
+- Job title
+- Prompt tokens used
+- Completion tokens used
+- Total tokens
+- Estimated cost in USD
+
+This data can be imported into spreadsheet applications for further analysis and tracking of your API usage over time.
+
+### Web Interface Token Display
+
+The web interface displays token usage statistics for each resume on the result page, including:
+- Analysis tokens
+- Customization tokens
+- Total tokens used
+- Estimated cost
+
 ## Troubleshooting
 
 - **LaTeX Compilation Errors**: Check the log file in `resume_output/logs/` for detailed error messages
 - **API Key Issues**: Make sure your Anthropic API key is correctly set as an environment variable
 - **Missing Dependencies**: Ensure you have all required Python packages and LaTeX installed
+- **Token Usage Issues**: If token tracking seems incorrect, check the token_usage.csv log file for detailed information
 
 ## License
 

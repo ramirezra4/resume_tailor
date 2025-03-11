@@ -109,6 +109,19 @@ def customize_resume_with_approved(original_latex, approved_changes, original_an
         messages=[{"role": "user", "content": prompt}]
     )
     
+    # Log token usage
+    input_tokens = response.usage.input_tokens
+    output_tokens = response.usage.output_tokens
+    
+    tailor.token_usage['customization_prompt_tokens'] += input_tokens
+    tailor.token_usage['customization_completion_tokens'] += output_tokens
+    tailor.token_usage['total_prompt_tokens'] += input_tokens
+    tailor.token_usage['total_completion_tokens'] += output_tokens
+    
+    # Log to file with job details
+    job_title = original_analysis.get('exact_job_title', 'Web App Customization')
+    tailor._log_token_usage("web_customization", job_title, input_tokens, output_tokens)
+    
     # Extract LaTeX content
     response_text = response.content[0].text
     
@@ -165,8 +178,15 @@ def tailor_resume():
                 # Read the original resume
                 original_content = tailor.read_latex_resume(file_path)
                 
+                # Track the initial token usage before analysis
+                initial_tokens = tailor.token_usage['total_prompt_tokens'] + tailor.token_usage['total_completion_tokens']
+                
                 # Analyze the job description instead of directly tailoring
                 analysis = tailor.analyze_job_description(job_description, original_content)
+                
+                # Calculate tokens used for analysis
+                current_tokens = tailor.token_usage['total_prompt_tokens'] + tailor.token_usage['total_completion_tokens']
+                analysis_tokens = current_tokens - initial_tokens
                 
                 # Store analysis in session for review
                 session['analysis'] = analysis
@@ -174,6 +194,7 @@ def tailor_resume():
                 session['job_description'] = job_description
                 session['job_title'] = job_title
                 session['company'] = company
+                session['analysis_tokens'] = analysis_tokens
                 
                 # Redirect to review page
                 return redirect(url_for('review_changes'))
@@ -204,6 +225,9 @@ def review_changes():
     
     # For POST requests, process approved changes
     if request.method == 'POST':
+        # Retrieve the analysis tokens from the session
+        analysis_tokens = session.get('analysis_tokens', 0)
+        
         # Get user-approved changes
         approved_changes = {
             'key_skills': [skill for skill in analysis.get('key_skills', []) 
@@ -273,6 +297,9 @@ def review_changes():
                     shutil.copy2(temp_pdf, pdf_output)
             
             # Add to applications log
+            # Get token usage statistics for this session
+            token_stats = tailor.get_token_usage_stats()
+            
             job_entry = {
                 "id": len(tailor.applications) + 1,
                 "date_created": datetime.datetime.now().isoformat(),
@@ -284,7 +311,13 @@ def review_changes():
                 "application_date": None,
                 "company": company,
                 "job_link": None,
-                "notes": "Created with user-approved changes"
+                "notes": "Created with user-approved changes",
+                "token_usage": {
+                    "analysis_tokens": analysis_tokens,
+                    "customization_tokens": input_tokens + output_tokens,
+                    "total_tokens": analysis_tokens + input_tokens + output_tokens,
+                    "cost_estimate_usd": token_stats["cost_estimate_usd"]
+                }
             }
             
             tailor.applications.append(job_entry)

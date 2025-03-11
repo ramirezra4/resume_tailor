@@ -66,6 +66,32 @@
                     <div class="col-md-8">{{ application.notes }}</div>
                 </div>
                 {% endif %}
+                
+                {% if application.token_usage %}
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Token Usage:</div>
+                    <div class="col-md-8">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td>Analysis:</td>
+                                <td>{{ application.token_usage.analysis_tokens|default(0) }} tokens</td>
+                            </tr>
+                            <tr>
+                                <td>Customization:</td>
+                                <td>{{ application.token_usage.customization_tokens|default(0) }} tokens</td>
+                            </tr>
+                            <tr>
+                                <td>Total:</td>
+                                <td>{{ application.token_usage.total_tokens|default(0) }} tokens</td>
+                            </tr>
+                            <tr>
+                                <td>Estimated Cost:</td>
+                                <td>${{ "%.4f"|format(application.token_usage.cost_estimate_usd|default(0)) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
