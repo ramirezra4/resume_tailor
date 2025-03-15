@@ -189,7 +189,7 @@ class ResumeTailor:
             self.spinner.start("Analyzing job description with Claude API (this may take a minute)...")
         
         prompt = f"""
-        You are an expert resume tailoring assistant specializing in ATS optimization. Your task is to analyze a job description and a resume, then provide guidance on tailoring the resume to better match the job requirements and pass ATS screening.
+        You are an expert resume tailoring assistant. Your task is to analyze a job description and a resume, then provide guidance on tailoring the resume to better match the job requirements.
 
         # Job Description:
         ```
@@ -202,17 +202,13 @@ class ResumeTailor:
         ```
 
         Please provide a structured analysis in JSON format with the following information:
-        1. "exact_job_title": Extract the exact job title from the job description (string)
-        2. "key_skills": Extract the key skills and requirements from the job description, focusing on hard skills, technical abilities, and core qualifications (array of strings)
-        3. "industry_keywords": Identify industry-specific terminology and buzzwords from the job description that would help pass ATS screening (array of strings)
-        4. "missing_skills": Identify skills in the job description that don't appear in the resume (array of strings)
-        5. "title_suggestions": Suggest how to modify job titles to better align with the target position while maintaining truthfulness (object with original titles as keys and suggested titles as values)
-        6. "experience_suggestions": Suggest modifications to experience descriptions to highlight relevant skills and incorporate keywords naturally (object with section identifiers as keys and suggested text as values)
-        7. "content_additions": Suggest additional content to add to the resume, particularly focusing on the summary section and skills section (object with section names as keys and content to add as values)
-        8. "power_word_suggestions": Suggest powerful action verbs and impact words to strengthen descriptions (array of strings)
-        9. "ats_format_suggestions": Suggest formatting improvements for ATS compatibility (object with section names as keys and format recommendations as values)
+        1. "key_skills": Extract the key skills and requirements from the job description (array of strings)
+        2. "missing_skills": Identify skills in the job description that don't appear in the resume (array of strings)
+        3. "title_suggestions": Suggest how to modify job titles to better align with the target position (object with original titles as keys and suggested titles as values)
+        4. "experience_suggestions": Suggest modifications to experience descriptions to highlight relevant skills (object with section identifiers as keys and suggested text as values)
+        5. "content_additions": Suggest additional content to add to the resume (object with section names as keys and content to add as values)
 
-        Your response should be valid JSON that can be parsed programmatically. Focus on making changes that will improve ATS compatibility and keyword matching while maintaining the truth of the resume. Pay special attention to incorporating the exact job title in the summary section and using numbers and metrics where appropriate.
+        Your response should be valid JSON that can be parsed programmatically. Focus on making changes that will improve ATS compatibility while maintaining the truth of the resume.
         """
         
         try:
@@ -220,7 +216,7 @@ class ResumeTailor:
                 model="claude-3-7-sonnet-20250219",
                 max_tokens=4000,
                 temperature=0.2,
-                system="You are an expert resume tailoring assistant that helps customize resumes for specific job descriptions. You specialize in ATS optimization and keyword placement. Provide only valid JSON in your response.",
+                system="You are an expert resume tailoring assistant that helps customize resumes for specific job descriptions. Provide only valid JSON in your response.",
                 messages=[{"role": "user", "content": prompt}]
             )
             
@@ -269,7 +265,7 @@ class ResumeTailor:
             self.spinner.start("Customizing resume based on job requirements...")
         
         prompt = f"""
-        You are an expert LaTeX resume editor specializing in ATS optimization. Your task is to modify a LaTeX resume based on analysis to better target a specific job and pass ATS screening.
+        You are an expert LaTeX resume editor. Your task is to modify a LaTeX resume based on analysis to better target a specific job.
 
         # Original Resume (LaTeX format):
         ```latex
@@ -282,17 +278,10 @@ class ResumeTailor:
         ```
 
         Please modify the LaTeX resume to incorporate the suggestions from the analysis. Focus on:
-
-        1. Adding the exact job title in the summary/objective section to immediately signal ATS relevance
-        2. Adjusting job titles to match the company's terminology if suggested
-        3. Enhancing experience descriptions to naturally incorporate key ATS keywords and industry terminology
-        4. Using powerful action verbs at the beginning of bullet points to convey impact
-        5. Adding a dedicated skills section that clearly lists all relevant hard skills and technical abilities
-        6. Including any missing skills that the candidate genuinely has (don't fabricate experience)
-        7. Using consistent formatting for dates, titles, and sections to improve ATS readability
-        8. Incorporating metrics and numbers where possible to quantify achievements
-        9. Ensuring proper spacing and formatting for optimal ATS parsing
-        10. Maintaining a clean, professional layout that works for both ATS and human readers
+        1. Adjusting job titles if suggested
+        2. Enhancing experience descriptions to highlight relevant skills
+        3. Adding any missing skills that the candidate genuinely has
+        4. Making the resume more ATS-friendly for this specific job
 
         Return ONLY the complete modified LaTeX code with no additional comments or explanations. The code should be valid LaTeX that will compile correctly.
         """
@@ -302,7 +291,7 @@ class ResumeTailor:
                 model="claude-3-7-sonnet-20250219",
                 max_tokens=4000,
                 temperature=0.2,
-                system="You are an expert LaTeX editor specializing in ATS-optimized resumes. Return only valid LaTeX code with no additional text.",
+                system="You are an expert LaTeX editor. Return only valid LaTeX code with no additional text.",
                 messages=[{"role": "user", "content": prompt}]
             )
             
